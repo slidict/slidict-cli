@@ -1,0 +1,50 @@
+name: Changelog
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Extract version
+        id: version
+        run: |
+          version=$(grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" lib/prspec/ruby/version.rb | head -n 1)
+          echo "version=v$version" >> $GITHUB_ENV
+          echo "VERSION_TAG=v$version" >> $GITHUB_ENV
+
+      - name: Check if version tag exists
+        id: check_tag
+        run: |
+          if gh release view "$VERSION_TAG" --json tagName > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate CHANGELOG with requarks/changelog-action
+        if: steps.check_tag.outputs.exists == 'true'
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.VERSION_TAG }}
+          writeToFile: true
+          changelogFilePath: CHANGELOG.md
+
+      - name: Draft release with release-drafter
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
