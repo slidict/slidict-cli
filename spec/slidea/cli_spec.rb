@@ -14,12 +14,12 @@ RSpec.describe Slidea::CLI do
         path = File.join(dir, "slides.md")
 
         status = cli.run([
-          "--topic", "Observability",
-          "--duration", "10 minutes",
-          "--audience", "SREs",
-          "--goal", "adopt the checklist",
-          "--output", path
-        ])
+                           "--topic", "Observability",
+                           "--duration", "10 minutes",
+                           "--audience", "SREs",
+                           "--goal", "adopt the checklist",
+                           "--output", path
+                         ])
 
         expect(status).to eq(0)
         expect(File.exist?(path)).to be(true)
@@ -70,6 +70,88 @@ RSpec.describe Slidea::CLI do
 
       expect(status).to eq(1)
       expect(output.string).to include("Error: --topic requires a value")
+    end
+
+    it "uses the built-in template when no llm-base-url is configured" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        cli.run([
+                  "--topic", "Observability", "--duration", "x", "--audience", "x", "--goal", "x",
+                  "--llm-api-key", "ollama", "--output", path
+                ])
+
+        expect(File.read(path)).to include("# Observability")
+      end
+    end
+
+    it "uses LLM-generated slides when an llm-base-url is configured" do
+      generated = [Slidea::Slide.new(title: "Generated title", bullets: %w[a b])]
+      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
+      allow_any_instance_of(Slidea::LLMClient).to receive(:generate_slides).and_return(generated)
+
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        cli.run([
+                  "--topic", "Observability", "--duration", "x", "--audience", "x", "--goal", "x",
+                  "--llm-base-url", "http://localhost:11434/v1", "--llm-api-key", "ollama", "--output", path
+                ])
+
+        expect(File.read(path)).to include("# Generated title")
+        expect(File.read(path)).not_to include("# Observability")
+      end
+    end
+
+    it "prints an error and exits without writing a file when the LLM request fails" do
+      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
+      allow_any_instance_of(Slidea::LLMClient).to receive(:generate_slides)
+        .and_raise(Slidea::LLMClient::Error, "boom")
+
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        status = cli.run([
+                           "--topic", "Observability", "--duration", "x", "--audience", "x", "--goal", "x",
+                           "--llm-base-url", "http://localhost:11434/v1", "--llm-api-key", "ollama", "--output", path
+                         ])
+
+        expect(status).to eq(1)
+        expect(output.string).to include("Error: LLM request failed (boom)")
+        expect(File.exist?(path)).to be(false)
+      end
+    end
+
+    it "checks the connection before asking any questions and exits without prompting on failure" do
+      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
+        .and_raise(Slidea::LLMClient::Error, "connection refused")
+      expect_any_instance_of(Slidea::LLMClient).not_to receive(:generate_slides)
+
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        status = cli.run(["--llm-base-url", "http://localhost:11434/v1", "--output", path])
+
+        expect(status).to eq(1)
+        expect(output.string).to include("Error: LLM request failed (connection refused)")
+        expect(output.string).not_to include("What would you like to talk about?")
+        expect(File.exist?(path)).to be(false)
+      end
+    end
+
+    it "skips the LLM call when --no-llm is given even with a base URL" do
+      expect(Slidea::LLMClient).not_to receive(:new)
+
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        cli.run([
+                  "--topic", "Observability", "--duration", "x", "--audience", "x", "--goal", "x",
+                  "--llm-base-url", "http://localhost:11434/v1", "--no-llm", "--output", path
+                ])
+
+        expect(File.read(path)).to include("# Observability")
+      end
     end
   end
 end

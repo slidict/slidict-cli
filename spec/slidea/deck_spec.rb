@@ -31,7 +31,8 @@ RSpec.describe Slidea::Deck do
 
   describe "#slides" do
     it "builds five slides that reference the deck details" do
-      deck = described_class.new(topic: "PDF Difference Monitoring", duration: "5 minutes", audience: "developers", goal: "try the MVP")
+      deck = described_class.new(topic: "PDF Difference Monitoring", duration: "5 minutes", audience: "developers",
+                                 goal: "try the MVP")
 
       slides = deck.slides
 
@@ -39,12 +40,12 @@ RSpec.describe Slidea::Deck do
       expect(slides.first.title).to eq("PDF Difference Monitoring")
       expect(slides.first.bullets).to include("For developers", "Goal: try the MVP", "Length: 5 minutes")
       expect(slides.map(&:title)).to eq([
-        "PDF Difference Monitoring",
-        "Why this matters",
-        "Core message",
-        "Suggested narrative",
-        "Next steps"
-      ])
+                                          "PDF Difference Monitoring",
+                                          "Why this matters",
+                                          "Core message",
+                                          "Suggested narrative",
+                                          "Next steps"
+                                        ])
     end
   end
 end
