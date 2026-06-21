@@ -9,4 +9,4 @@ Style/StringLiteralsInInterpolation:
 
 Metrics/ClassLength:
   Exclude:
-    - "lib/slidea/llm_client.rb"
+    - "lib/slidict/llm_client.rb"

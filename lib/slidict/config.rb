@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Slidea
+module Slidict
   class Config
     DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -15,9 +15,9 @@ module Slidea
 
     def self.from_env(env = ENV)
       new(
-        base_url: env["SLIDEA_LLM_BASE_URL"],
-        api_key: env["SLIDEA_LLM_API_KEY"],
-        model: env["SLIDEA_LLM_MODEL"] || DEFAULT_MODEL
+        base_url: env["SLIDICT_LLM_BASE_URL"],
+        api_key: env["SLIDICT_LLM_API_KEY"],
+        model: env["SLIDICT_LLM_MODEL"] || DEFAULT_MODEL
       )
     end
 

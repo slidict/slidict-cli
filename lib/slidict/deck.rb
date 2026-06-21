@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Slidea
+module Slidict
   Slide = Struct.new(:title, :bullets, keyword_init: true)
 
   class Deck

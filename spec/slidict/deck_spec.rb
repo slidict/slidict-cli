@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Slidea::Deck do
+RSpec.describe Slidict::Deck do
   describe "#initialize" do
     it "falls back to defaults for blank answers" do
       deck = described_class.new(topic: "", duration: "", audience: "", goal: "")

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Slidea
+module Slidict
   class CLI
     DEFAULT_OUTPUT = "slides.md"
 
@@ -128,7 +128,7 @@ module Slidea
 
     def print_help
       @output.puts <<~HELP
-        Usage: slidea [options]
+        Usage: slidict [options]
 
         Generate presentation-ready Markdown slides from a short conversation.
 
@@ -138,10 +138,10 @@ module Slidea
             --audience TEXT    Target audience
             --goal TEXT        Desired audience takeaway or action
             --framework NAME   slidev, marp, or asciidoctor-revealjs (default: slidev)
-            --llm-base-url URL OpenAI Compatible API base URL (env: SLIDEA_LLM_BASE_URL).
+            --llm-base-url URL OpenAI Compatible API base URL (env: SLIDICT_LLM_BASE_URL).
                                When omitted, the built-in slide template is used instead.
-            --llm-api-key KEY  API key for the LLM endpoint (env: SLIDEA_LLM_API_KEY)
-            --llm-model NAME   Model name to request (env: SLIDEA_LLM_MODEL, default: gpt-4o-mini)
+            --llm-api-key KEY  API key for the LLM endpoint (env: SLIDICT_LLM_API_KEY)
+            --llm-model NAME   Model name to request (env: SLIDICT_LLM_MODEL, default: gpt-4o-mini)
             --no-llm           Skip the LLM call and use the built-in slide template
         -o, --output PATH      Output file (default: slides.md)
         -h, --help             Show this help

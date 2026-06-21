@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Slidea
+module Slidict
   class MarkdownRenderer
     FRONTMATTER_BY_FRAMEWORK = {
       "slidev" => "theme: default\nclass: text-center",

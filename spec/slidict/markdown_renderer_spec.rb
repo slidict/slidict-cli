@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe Slidea::MarkdownRenderer do
+RSpec.describe Slidict::MarkdownRenderer do
   let(:deck) do
-    Slidea::Deck.new(
+    Slidict::Deck.new(
       topic: "PDF Difference Monitoring Service",
       duration: "5 minutes",
       audience: "developers",
@@ -33,7 +33,7 @@ RSpec.describe Slidea::MarkdownRenderer do
     end
 
     it "renders framework-specific frontmatter" do
-      marp_deck = Slidea::Deck.new(topic: "x", duration: "x", audience: "x", goal: "x", framework: "marp")
+      marp_deck = Slidict::Deck.new(topic: "x", duration: "x", audience: "x", goal: "x", framework: "marp")
 
       markdown = described_class.new.render(marp_deck)
 
@@ -41,7 +41,7 @@ RSpec.describe Slidea::MarkdownRenderer do
     end
 
     it "falls back to the slidev frontmatter for unknown frameworks" do
-      unknown_deck = Slidea::Deck.new(topic: "x", duration: "x", audience: "x", goal: "x", framework: "keynote")
+      unknown_deck = Slidict::Deck.new(topic: "x", duration: "x", audience: "x", goal: "x", framework: "keynote")
 
       markdown = described_class.new.render(unknown_deck)
 

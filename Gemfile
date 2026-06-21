@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in slidea.gemspec
+# Specify your gem's dependencies in slidict.gemspec
 gemspec
 
 gem "irb"

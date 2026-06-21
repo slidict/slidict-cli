@@ -4,10 +4,10 @@ require "net/http"
 require "uri"
 require "json"
 
-module Slidea
+module Slidict
   # Talks to any OpenAI Compatible API (OpenAI, Ollama, LM Studio, vLLM, etc.)
   # via the standard /chat/completions endpoint. Configure the target with
-  # Slidea::Config (base_url, api_key, model).
+  # Slidict::Config (base_url, api_key, model).
   class LLMClient
     class Error < StandardError; end
 

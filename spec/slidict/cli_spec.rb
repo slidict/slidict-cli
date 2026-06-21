@@ -3,7 +3,7 @@
 require "stringio"
 require "tmpdir"
 
-RSpec.describe Slidea::CLI do
+RSpec.describe Slidict::CLI do
   let(:output) { StringIO.new }
   let(:input) { StringIO.new }
   let(:cli) { described_class.new(input: input, output: output) }
@@ -54,7 +54,7 @@ RSpec.describe Slidea::CLI do
       status = cli.run(["-h"])
 
       expect(status).to eq(0)
-      expect(output.string).to include("Usage: slidea [options]")
+      expect(output.string).to include("Usage: slidict [options]")
     end
 
     it "prints an error and help when an unknown option is given" do
@@ -62,7 +62,7 @@ RSpec.describe Slidea::CLI do
 
       expect(status).to eq(1)
       expect(output.string).to include("Error: unknown option --bogus")
-      expect(output.string).to include("Usage: slidea [options]")
+      expect(output.string).to include("Usage: slidict [options]")
     end
 
     it "prints an error when an option is missing its value" do
@@ -86,9 +86,9 @@ RSpec.describe Slidea::CLI do
     end
 
     it "uses LLM-generated slides when an llm-base-url is configured" do
-      generated = [Slidea::Slide.new(title: "Generated title", bullets: %w[a b])]
-      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidea::LLMClient).to receive(:generate_slides).and_return(generated)
+      generated = [Slidict::Slide.new(title: "Generated title", bullets: %w[a b])]
+      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides).and_return(generated)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -104,9 +104,9 @@ RSpec.describe Slidea::CLI do
     end
 
     it "prints an error and exits without writing a file when the LLM request fails" do
-      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidea::LLMClient).to receive(:generate_slides)
-        .and_raise(Slidea::LLMClient::Error, "boom")
+      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides)
+        .and_raise(Slidict::LLMClient::Error, "boom")
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -123,9 +123,9 @@ RSpec.describe Slidea::CLI do
     end
 
     it "checks the connection before asking any questions and exits without prompting on failure" do
-      allow_any_instance_of(Slidea::LLMClient).to receive(:verify_connection!)
-        .and_raise(Slidea::LLMClient::Error, "connection refused")
-      expect_any_instance_of(Slidea::LLMClient).not_to receive(:generate_slides)
+      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
+        .and_raise(Slidict::LLMClient::Error, "connection refused")
+      expect_any_instance_of(Slidict::LLMClient).not_to receive(:generate_slides)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -140,7 +140,7 @@ RSpec.describe Slidea::CLI do
     end
 
     it "skips the LLM call when --no-llm is given even with a base URL" do
-      expect(Slidea::LLMClient).not_to receive(:new)
+      expect(Slidict::LLMClient).not_to receive(:new)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")

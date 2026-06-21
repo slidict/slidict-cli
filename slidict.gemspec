@@ -1,22 +1,22 @@
 # frozen_string_literal: true
 
-require_relative "lib/slidea/version"
+require_relative "lib/slidict/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "slidea"
-  spec.version = Slidea::VERSION
+  spec.name = "slidict"
+  spec.version = Slidict::VERSION
   spec.authors = ["Yusuke Abe"]
   spec.email = ["255824173+abechan1@users.noreply.github.com"]
 
   spec.summary = "Generate presentation-ready slides from a simple conversation."
-  spec.description = "Slidea is a Ruby CLI for turning rough ideas into presentation-ready Markdown slides."
-  spec.homepage = "https://labs.slidict.io/slidea/"
+  spec.description = "Slidict is a Ruby CLI for turning rough ideas into presentation-ready Markdown slides."
+  spec.homepage = "https://labs.slidict.io/slidict/"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/slidict/slidea"
-  spec.metadata["changelog_uri"] = "https://github.com/slidict/slidea/releases"
+  spec.metadata["source_code_uri"] = "https://github.com/slidict/slidict"
+  spec.metadata["changelog_uri"] = "https://github.com/slidict/slidict/releases"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
