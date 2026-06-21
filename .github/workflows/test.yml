@@ -27,7 +27,7 @@ jobs:
           bundler-cache: true
 
       - name: Run test suite
-        run: bundle exec rake test
+        run: bundle exec rake spec
 
       - name: Smoke test CLI
         run: |
