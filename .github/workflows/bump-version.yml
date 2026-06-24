@@ -89,11 +89,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_VERSION: ${{ steps.version.outputs.next }}
         run: |
-          if gh pr view bump-version --json number >/dev/null 2>&1; then
-            echo "Pull request for bump-version already exists"
-            exit 0
-          fi
-
           gh pr create \
             --base "${GITHUB_REF_NAME}" \
             --head bump-version \
