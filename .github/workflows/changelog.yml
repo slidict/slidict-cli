@@ -42,16 +42,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate CHANGELOG with requarks/changelog-action
-        if: steps.check_tag.outputs.exists == 'true'
-        id: changelog
-        uses: requarks/changelog-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.VERSION_TAG }}
-          writeToFile: true
-          changelogFilePath: CHANGELOG.md
-
       - name: Draft release with release-drafter
         if: steps.check_tag.outputs.exists == 'false'
         uses: release-drafter/release-drafter@v5

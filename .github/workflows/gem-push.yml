@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
       packages: write
+      pull-requests: read
 
     steps:
     - uses: actions/checkout@v3
@@ -28,44 +29,13 @@ jobs:
         version=$(echo "${GITHUB_REF#refs/tags/}")
         echo "version=$version" >> $GITHUB_ENV
 
-    - name: Check if a previous tag exists
-      id: previous_tag
-      run: |
-        if [ "$(git tag --list 'v*' | wc -l)" -gt 1 ]; then
-          echo "exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "exists=false" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Generate CHANGELOG
-      if: steps.previous_tag.outputs.exists == 'true'
-      id: changelog
-      uses: requarks/changelog-action@v1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        tag: ${{ env.version }}
-        writeToFile: true
-        changelogFilePath: CHANGELOG.md
-        includeRefIssues: true
-        useGitmojis: true
-
-    - name: Commit updated CHANGELOG.md
-      if: steps.previous_tag.outputs.exists == 'true'
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        git add CHANGELOG.md
-        git commit -m "docs: update CHANGELOG for ${{ env.version }}" || echo "No changes to commit"
-        git push origin HEAD:main
-      continue-on-error: true
-
     - name: Update GitHub Release
       uses: ncipollo/release-action@v1
       with:
         allowUpdates: true
+        omitBodyDuringUpdate: true
         tag: ${{ env.version }}
         name: ${{ env.version }}
-        body: ${{ steps.changelog.outputs.changes }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish to GPR
