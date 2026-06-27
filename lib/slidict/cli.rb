@@ -22,7 +22,7 @@ module Slidict
     def run(argv = [])
       options = parse(argv)
       return print_help if options[:help]
-      return login if options[:command] == "login"
+      return auth if options[:command] == "auth"
 
       config = build_config(options)
       client = llm_client_for(config)
@@ -66,11 +66,11 @@ module Slidict
       options = { framework: "slidev" }
       args = argv.dup
 
-      if args.first == "login"
+      if args.first == "auth"
         args.shift
-        raise ArgumentError, "login does not accept options" unless args.empty?
+        raise ArgumentError, "auth does not accept options" unless args.empty?
 
-        options[:command] = "login"
+        options[:command] = "auth"
         return options
       end
 
@@ -130,7 +130,7 @@ module Slidict
       false
     end
 
-    def login
+    def auth
       client = @auth_client || AuthClient.new
       credentials = @credentials || Credentials.new
 
@@ -156,12 +156,12 @@ module Slidict
         @sleeper.sleep(device[:interval])
       end
     rescue AuthClient::Error, KeyError => e
-      @output.puts "Error: GitHub login failed (#{e.message})"
+      @output.puts "Error: GitHub auth failed (#{e.message})"
       1
     end
 
     def login_expired
-      @output.puts "Error: GitHub login timed out. Run `slidict login` and try again."
+      @output.puts "Error: GitHub auth timed out. Run `slidict auth` and try again."
       1
     end
 
@@ -183,12 +183,12 @@ module Slidict
     def print_help
       @output.puts <<~HELP
         Usage: slidict [options]
-        Usage: slidict login
+        Usage: slidict auth
 
         Generate presentation source files from a short conversation.
 
         Commands:
-            login            Authenticate the CLI with GitHub and save a CLI access token
+          auth             Authenticate the CLI with GitHub and save a CLI access token
 
         Options:
             --topic TEXT       Presentation topic

@@ -67,7 +67,7 @@ RSpec.describe Slidict::CLI do
       end
     end
 
-    it "runs the GitHub CLI login device flow and stores a CLI access token" do
+    it "runs the GitHub CLI auth device flow and stores a CLI access token" do
       client = Class.new do
         def request_device_code
           {
@@ -98,7 +98,7 @@ RSpec.describe Slidict::CLI do
         .with(access_token: "cli-token", token_type: "Bearer", provider: "github")
         .and_return("/tmp/slidict/credentials.json")
 
-      status = cli.run(["login"])
+      status = cli.run(["auth"])
 
       expect(status).to eq(0)
       expect(output.string).to include("Open https://slidict.io/cli/activate in your browser")
@@ -107,11 +107,11 @@ RSpec.describe Slidict::CLI do
       expect(output.string).to include("Saved CLI access token to /tmp/slidict/credentials.json")
     end
 
-    it "prints an error when login options are passed" do
-      status = cli.run(["login", "--topic", "x"])
+    it "prints an error when auth options are passed" do
+      status = cli.run(["auth", "--topic", "x"])
 
       expect(status).to eq(1)
-      expect(output.string).to include("Error: login does not accept options")
+      expect(output.string).to include("Error: auth does not accept options")
     end
 
     it "prints help and returns 0 when -h is given" do
