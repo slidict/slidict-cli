@@ -2,13 +2,8 @@
 
 module Slidict
   class MarkdownRenderer
-    FRONTMATTER_BY_FRAMEWORK = {
-      "slidev" => "theme: default\nclass: text-center",
-      "marp" => "marp: true\ntheme: default"
-    }.freeze
-
     def render(deck)
-      return render_asciidoctor_revealjs(deck) if deck.framework == "asciidoctor-revealjs"
+      return render_asciidoctor_revealjs(deck) if Output::Format.fetch(deck.framework).body_format == "asciidoc"
 
       [frontmatter(deck.framework), deck.slides.map { |slide| render_slide(slide) }.join("\n---\n\n")].join("\n")
     end
@@ -16,7 +11,7 @@ module Slidict
     private
 
     def frontmatter(framework)
-      body = FRONTMATTER_BY_FRAMEWORK.fetch(framework, FRONTMATTER_BY_FRAMEWORK["slidev"])
+      body = Output::Format.fetch(framework).frontmatter
       "---\n#{body}\ngenerated: #{Time.now.utc.iso8601}\n---\n"
     end
 

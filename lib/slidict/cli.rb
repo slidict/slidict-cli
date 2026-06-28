@@ -5,13 +5,6 @@ require "pathname"
 
 module Slidict
   class CLI
-    DEFAULT_OUTPUT = "slides.md"
-    DEFAULT_OUTPUT_BY_FRAMEWORK = {
-      "slidev" => "slides.md",
-      "marp" => "slides.md",
-      "asciidoctor-revealjs" => "slides.adoc"
-    }.freeze
-
     def initialize(input: $stdin, output: $stdout, renderer: MarkdownRenderer.new, auth_client: nil,
                    credentials: nil, sleeper: Kernel, slides_command: nil, server: nil)
       @input = input
@@ -223,7 +216,7 @@ module Slidict
     end
 
     def body_format_for(framework)
-      framework.to_s.downcase == "asciidoctor-revealjs" ? "asciidoc" : "markdown"
+      Output::Format.fetch(framework).body_format
     end
 
     def login_expired
@@ -265,7 +258,7 @@ module Slidict
             --duration TEXT    Presentation length, for example "5 minutes"
             --audience TEXT    Target audience
             --goal TEXT        Desired audience takeaway or action
-            --framework NAME   slidev, marp, or asciidoctor-revealjs (default: slidev)
+            --framework NAME   #{Output::Format.names.join(", ")} (default: slidev)
             --filename NAME    File name under public/ (default: next sequential file)
             --llm-base-url URL OpenAI Compatible API base URL (env: SLIDICT_LLM_BASE_URL).
                                When omitted, the built-in slide template is used instead.
@@ -312,7 +305,7 @@ module Slidict
     end
 
     def default_extension_for(framework)
-      File.extname(DEFAULT_OUTPUT_BY_FRAMEWORK.fetch(framework.to_s.downcase, DEFAULT_OUTPUT))
+      Output::Format.fetch(framework).extension
     end
   end
 end
