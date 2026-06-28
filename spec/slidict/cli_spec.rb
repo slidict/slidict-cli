@@ -28,17 +28,17 @@ RSpec.describe Slidict::CLI do
       end
     end
 
-    it "defaults the output path to slides.md" do
+    it "defaults the output path to the next sequential public file" do
       Dir.mktmpdir do |dir|
         Dir.chdir(dir) do
           cli.run(["--topic", "x", "--duration", "x", "--audience", "x", "--goal", "x"])
 
-          expect(File.exist?("slides.md")).to be(true)
+          expect(File.exist?("public/001.md")).to be(true)
         end
       end
     end
 
-    it "uses a framework-specific default output path" do
+    it "uses a framework-specific extension for the sequential output path" do
       Dir.mktmpdir do |dir|
         Dir.chdir(dir) do
           cli.run([
@@ -49,8 +49,39 @@ RSpec.describe Slidict::CLI do
                     "--framework", "asciidoctor-revealjs"
                   ])
 
-          expect(File.exist?("slides.adoc")).to be(true)
-          expect(File.read("slides.adoc")).to include("= Observability")
+          expect(File.exist?("public/001.adoc")).to be(true)
+          expect(File.read("public/001.adoc")).to include("= Observability")
+        end
+      end
+    end
+
+    it "uses --filename under public and appends the framework extension" do
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          cli.run([
+                    "--topic", "Observability",
+                    "--duration", "10 minutes",
+                    "--audience", "SREs",
+                    "--goal", "adopt the checklist",
+                    "--filename", "team/demo"
+                  ])
+
+          expect(File.exist?("public/team/demo.md")).to be(true)
+          expect(File.read("public/team/demo.md")).to include("# Observability")
+        end
+      end
+    end
+
+    it "increments the default output filename when a sequential file exists" do
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          FileUtils.mkdir_p("public")
+          File.write("public/001.md", "existing")
+
+          cli.run(["--topic", "x", "--duration", "x", "--audience", "x", "--goal", "x"])
+
+          expect(File.read("public/001.md")).to eq("existing")
+          expect(File.exist?("public/002.md")).to be(true)
         end
       end
     end
@@ -255,6 +286,16 @@ RSpec.describe Slidict::CLI do
 
       expect(status).to eq(0)
       expect(slides_command).to have_received(:run).with(["list", "--page", "2"])
+    end
+
+    it "delegates the serve command and passes arguments to the Sinatra server" do
+      server = instance_double(Slidict::Server, run: 0)
+      cli = described_class.new(input: input, output: output, server: server)
+
+      status = cli.run(["serve", "-p", "4567", "-o", "0.0.0.0"])
+
+      expect(status).to eq(0)
+      expect(server).to have_received(:run).with(["-p", "4567", "-o", "0.0.0.0"])
     end
 
     it "skips the LLM call when --no-llm is given even with a base URL" do

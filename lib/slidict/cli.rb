@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "fileutils"
+require "pathname"
+
 module Slidict
   class CLI
     DEFAULT_OUTPUT = "slides.md"
@@ -10,7 +13,7 @@ module Slidict
     }.freeze
 
     def initialize(input: $stdin, output: $stdout, renderer: MarkdownRenderer.new, auth_client: nil,
-                   credentials: nil, sleeper: Kernel, slides_command: nil)
+                   credentials: nil, sleeper: Kernel, slides_command: nil, server: nil)
       @input = input
       @output = output
       @renderer = renderer
@@ -18,6 +21,7 @@ module Slidict
       @credentials = credentials
       @sleeper = sleeper
       @slides_command = slides_command
+      @server = server
     end
 
     def run(argv = [])
@@ -25,6 +29,7 @@ module Slidict
       return print_help if options[:help]
       return auth if options[:command] == "auth"
       return slides(options[:args]) if options[:command] == "slides"
+      return serve(options[:args]) if options[:command] == "serve"
 
       config = build_config(options)
       client = llm_client_for(config)
@@ -53,6 +58,7 @@ module Slidict
 
       path = options[:output]
       content = @renderer.render(deck)
+      FileUtils.mkdir_p(File.dirname(path))
       File.write(path, content)
       @output.puts "Created #{path}"
 
@@ -87,12 +93,21 @@ module Slidict
         return options
       end
 
+      if args.first == "serve"
+        args.shift
+        options[:command] = "serve"
+        options[:args] = args
+        return options
+      end
+
       until args.empty?
         case (arg = args.shift)
         when "-h", "--help"
           options[:help] = true
         when "-o", "--output"
           options[:output] = fetch_value!(args, arg)
+        when "--filename"
+          options[:filename] = fetch_value!(args, arg)
         when "--topic"
           options[:topic] = fetch_value!(args, arg)
         when "--duration"
@@ -124,7 +139,7 @@ module Slidict
         end
       end
 
-      options[:output] ||= default_output_for(options[:framework])
+      options[:output] ||= output_path_for(options[:framework], options[:filename])
       options
     end
 
@@ -185,6 +200,10 @@ module Slidict
       slides_command.run(args)
     end
 
+    def serve(args)
+      server.run(args)
+    end
+
     def publish_to_slidict(deck, content, options)
       slides_command.publish(
         id: options[:slide_id],
@@ -197,6 +216,10 @@ module Slidict
 
     def slides_command
       @slides_command ||= SlidesCommand.new(output: @output, credentials: @credentials, reauthenticate: method(:auth))
+    end
+
+    def server
+      @server ||= Server.new(output: @output)
     end
 
     def body_format_for(framework)
@@ -228,12 +251,14 @@ module Slidict
         Usage: slidict [options]
         Usage: slidict auth
         Usage: slidict slides <list|show|create|edit> [options]
+        Usage: slidict serve [sinatra options]
 
         Generate presentation source files from a short conversation.
 
         Commands:
           auth             Authenticate the CLI with GitHub and save a CLI access token
           slides           Manage your slides on slidict.io (run `slidict slides -h` for details)
+          serve            Serve slide files from ./public with Sinatra
 
         Options:
             --topic TEXT       Presentation topic
@@ -241,6 +266,7 @@ module Slidict
             --audience TEXT    Target audience
             --goal TEXT        Desired audience takeaway or action
             --framework NAME   slidev, marp, or asciidoctor-revealjs (default: slidev)
+            --filename NAME    File name under public/ (default: next sequential file)
             --llm-base-url URL OpenAI Compatible API base URL (env: SLIDICT_LLM_BASE_URL).
                                When omitted, the built-in slide template is used instead.
             --llm-api-key KEY  API key for the LLM endpoint (env: SLIDICT_LLM_API_KEY)
@@ -253,14 +279,40 @@ module Slidict
                                (implies --publish)
             --slide-title TEXT Title for the published slide (default: --topic)
             --visibility VIS   public, unlisted, or group_only (default: public)
-        -o, --output PATH      Output file (default depends on --framework)
+        -o, --output PATH      Output file (overrides --filename and the public/ default)
         -h, --help             Show this help
       HELP
       0
     end
 
-    def default_output_for(framework)
-      DEFAULT_OUTPUT_BY_FRAMEWORK.fetch(framework.to_s.downcase, DEFAULT_OUTPUT)
+    def output_path_for(framework, filename)
+      return File.join("public", normalize_filename(filename, framework)) if filename
+
+      next_sequential_output_for(framework)
+    end
+
+    def normalize_filename(filename, framework)
+      path = filename.to_s.strip
+      raise ArgumentError, "--filename requires a relative path under public" if path.empty?
+      raise ArgumentError, "--filename must be relative" if Pathname.new(path).absolute?
+      raise ArgumentError, "--filename cannot include .." if Pathname.new(path).each_filename.any?("..")
+
+      File.extname(path).empty? ? "#{path}#{default_extension_for(framework)}" : path
+    end
+
+    def next_sequential_output_for(framework)
+      extension = default_extension_for(framework)
+      number = 1
+      loop do
+        path = File.join("public", format("%03d%s", number, extension))
+        return path unless File.exist?(path)
+
+        number += 1
+      end
+    end
+
+    def default_extension_for(framework)
+      File.extname(DEFAULT_OUTPUT_BY_FRAMEWORK.fetch(framework.to_s.downcase, DEFAULT_OUTPUT))
     end
   end
 end
