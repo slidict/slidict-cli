@@ -37,8 +37,8 @@ module Slidict
       # slide_texts is an array of slide bodies (1-indexed by position) as
       # produced by Slidict::Lint::SlideParser. Returns an array of
       # Slidict::Lint::Finding.
-      def lint_slides(slide_texts)
-        content = chat_completion(lint_prompt_for(slide_texts))
+      def lint_slides(slide_texts, translate: nil)
+        content = chat_completion(lint_prompt_for(slide_texts, translate: translate))
         findings_from(content)
       end
 
@@ -93,9 +93,10 @@ module Slidict
         JSON array. Return an empty array [] if you find no issues.
       PROMPT
 
-      def lint_prompt_for(slide_texts)
+      def lint_prompt_for(slide_texts, translate: nil)
         numbered = slide_texts.each_with_index.map { |text, i| "--- Slide #{i + 1} ---\n#{text}" }.join("\n\n")
-        format(LINT_PROMPT_TEMPLATE, numbered: numbered)
+        prompt = format(LINT_PROMPT_TEMPLATE, numbered: numbered)
+        translate ? "#{prompt}\nWrite each message field in #{translate}." : prompt
       end
 
       def findings_from(content)

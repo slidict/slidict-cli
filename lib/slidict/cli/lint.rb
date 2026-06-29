@@ -36,7 +36,7 @@ module Slidict
       end
 
       def lint(options, config)
-        @linter_factory.call(config).lint(File.read(options[:path]), format: format_for(options))
+        @linter_factory.call(config).lint(File.read(options[:path]), format: format_for(options), translate: options[:translate])
       end
 
       def print_usage_error(error)
@@ -70,6 +70,7 @@ module Slidict
           when "--llm-base-url" then options[:llm_base_url] = fetch_value!(args, arg)
           when "--llm-api-key" then options[:llm_api_key] = fetch_value!(args, arg)
           when "--llm-model" then options[:llm_model] = fetch_value!(args, arg)
+          when "--translate" then options[:translate] = fetch_value!(args, arg)
           else raise ArgumentError, "unknown option #{arg}"
           end
         end
@@ -124,6 +125,7 @@ module Slidict
               --llm-base-url URL  OpenAI Compatible API base URL (env: SLIDICT_LLM_BASE_URL)
               --llm-api-key KEY   API key for the LLM endpoint (env: SLIDICT_LLM_API_KEY)
               --llm-model NAME    Model name to request (env: SLIDICT_LLM_MODEL, default: gpt-4o-mini)
+              --translate LANG    Translate findings into the given language (e.g. Japanese)
           -h, --help               Show this help
         HELP
         0

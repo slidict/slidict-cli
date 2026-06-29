@@ -120,5 +120,33 @@ RSpec.describe Slidict::Llm::Client do
 
       expect { client.lint_slides(["# Title"]) }.to raise_error(Slidict::Llm::Client::Error, /could not parse/)
     end
+
+    it "includes the translate language in the prompt when translate: is given" do
+      findings_json = [].to_json
+      http = instance_double(Net::HTTP)
+      response = Net::HTTPOK.new("1.1", "200", "OK")
+      allow(response).to receive(:body).and_return({ "choices" => [{ "message" => { "content" => findings_json } }] }.to_json)
+      request_body = nil
+      allow(http).to receive(:request) { |req| request_body = req.body; response }
+      allow(Net::HTTP).to receive(:start).and_yield(http)
+
+      client.lint_slides(["# Title"], translate: "Japanese")
+
+      expect(JSON.parse(request_body)["messages"].first["content"]).to include("Japanese")
+    end
+
+    it "does not add a translate instruction when translate: is nil" do
+      findings_json = [].to_json
+      http = instance_double(Net::HTTP)
+      response = Net::HTTPOK.new("1.1", "200", "OK")
+      allow(response).to receive(:body).and_return({ "choices" => [{ "message" => { "content" => findings_json } }] }.to_json)
+      request_body = nil
+      allow(http).to receive(:request) { |req| request_body = req.body; response }
+      allow(Net::HTTP).to receive(:start).and_yield(http)
+
+      client.lint_slides(["# Title"])
+
+      expect(JSON.parse(request_body)["messages"].first["content"]).not_to include("Write each message field in")
+    end
   end
 end

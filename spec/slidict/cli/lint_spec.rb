@@ -25,7 +25,7 @@ RSpec.describe Slidict::Cli::Lint do
     it "prints findings returned by the linter" do
       path = write_deck
       findings = [Slidict::Lint::Finding.new(slide: 3, severity: "warning", message: "the point is unclear")]
-      allow(linter).to receive(:lint).with(File.read(path), format: "markdown").and_return(findings)
+      allow(linter).to receive(:lint).with(File.read(path), format: "markdown", translate: nil).and_return(findings)
 
       status = cli.run([path, "--llm-base-url", "http://localhost:11434/v1"])
 
@@ -45,9 +45,16 @@ RSpec.describe Slidict::Cli::Lint do
 
     it "auto-detects asciidoc from the file extension" do
       path = write_deck("talk.adoc", "= Title\n\n== First\n\n* one")
-      expect(linter).to receive(:lint).with(anything, format: "asciidoc").and_return([])
+      expect(linter).to receive(:lint).with(anything, format: "asciidoc", translate: nil).and_return([])
 
       cli.run([path, "--llm-base-url", "http://localhost:11434/v1"])
+    end
+
+    it "passes the translate language to the linter" do
+      path = write_deck
+      expect(linter).to receive(:lint).with(anything, format: "markdown", translate: "Japanese").and_return([])
+
+      cli.run([path, "--llm-base-url", "http://localhost:11434/v1", "--translate", "Japanese"])
     end
 
     it "requires an LLM endpoint to be configured" do

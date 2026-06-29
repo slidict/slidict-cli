@@ -11,11 +11,11 @@ module Slidict
         @client = client
       end
 
-      def lint(content, format: "markdown")
+      def lint(content, format: "markdown", translate: nil)
         slides = SlideParser.parse(content, format: format)
         raise Error, "no slides found in the given file" if slides.empty?
 
-        @client.lint_slides(slides)
+        @client.lint_slides(slides, translate: translate)
       end
     end
   end

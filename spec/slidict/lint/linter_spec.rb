@@ -8,7 +8,7 @@ RSpec.describe Slidict::Lint::Linter do
     it "parses the deck into slides and delegates to the client" do
       content = "# Title\n\n---\n\n# Second"
       findings = [Slidict::Lint::Finding.new(slide: 1, severity: "warning", message: "x")]
-      allow(client).to receive(:lint_slides).with(["# Title", "# Second"]).and_return(findings)
+      allow(client).to receive(:lint_slides).with(["# Title", "# Second"], translate: nil).and_return(findings)
 
       expect(linter.lint(content, format: "markdown")).to eq(findings)
     end
