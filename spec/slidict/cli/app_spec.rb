@@ -182,8 +182,8 @@ RSpec.describe Slidict::Cli::App do
 
     it "uses LLM-generated slides when an llm-base-url is configured" do
       generated = [Slidict::Slide.new(title: "Generated title", bullets: %w[a b])]
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides).and_return(generated)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:generate_slides).and_return(generated)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -199,9 +199,9 @@ RSpec.describe Slidict::Cli::App do
     end
 
     it "prints an error and exits without writing a file when the LLM request fails" do
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides)
-        .and_raise(Slidict::LLMClient::Error, "boom")
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:generate_slides)
+        .and_raise(Slidict::Llm::Client::Error, "boom")
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -218,9 +218,9 @@ RSpec.describe Slidict::Cli::App do
     end
 
     it "checks the connection before asking any questions and exits without prompting on failure" do
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-        .and_raise(Slidict::LLMClient::Error, "connection refused")
-      expect_any_instance_of(Slidict::LLMClient).not_to receive(:generate_slides)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+        .and_raise(Slidict::Llm::Client::Error, "connection refused")
+      expect_any_instance_of(Slidict::Llm::Client).not_to receive(:generate_slides)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -299,7 +299,7 @@ RSpec.describe Slidict::Cli::App do
     end
 
     it "skips the LLM call when --no-llm is given even with a base URL" do
-      expect(Slidict::LLMClient).not_to receive(:new)
+      expect(Slidict::Llm::Client).not_to receive(:new)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")

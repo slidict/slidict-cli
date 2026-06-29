@@ -40,7 +40,7 @@ module Slidict
         if client
           begin
             slides = client.generate_slides(deck)
-          rescue LLMClient::Error => e
+          rescue Llm::Client::Error => e
             @output.puts "Error: LLM request failed (#{e.message})"
             return 1
           end
@@ -149,13 +149,13 @@ module Slidict
       def llm_client_for(config)
         return nil unless config.llm_enabled?
 
-        LLMClient.new(base_url: config.base_url, api_key: config.api_key, model: config.model)
+        Llm::Client.new(base_url: config.base_url, api_key: config.api_key, model: config.model)
       end
 
       def verify_connection(client)
         client.verify_connection!
         true
-      rescue LLMClient::Error => e
+      rescue Llm::Client::Error => e
         @output.puts "Error: LLM request failed (#{e.message})"
         false
       end
