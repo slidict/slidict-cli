@@ -5,7 +5,7 @@ require "tmpdir"
 
 RSpec.describe Slidict::Cli::Slides do
   let(:output) { StringIO.new }
-  let(:client) { instance_double(Slidict::External::SlidesClient) }
+  let(:client) { instance_double(Slidict::External::SlidictIo::Client) }
   let(:command) { described_class.new(output: output, client: client) }
 
   describe "#run" do
@@ -68,7 +68,7 @@ RSpec.describe Slidict::Cli::Slides do
       end
 
       it "prints an error when the slide does not exist" do
-        allow(client).to receive(:show).and_raise(Slidict::External::SlidesClient::NotFound, "not_found")
+        allow(client).to receive(:show).and_raise(Slidict::External::SlidictIo::Client::NotFound, "not_found")
 
         status = command.run(%w[show 999])
 
@@ -127,7 +127,7 @@ RSpec.describe Slidict::Cli::Slides do
       end
 
       it "reports rate limiting" do
-        allow(client).to receive(:create).and_raise(Slidict::External::SlidesClient::RateLimited, "rate_limited")
+        allow(client).to receive(:create).and_raise(Slidict::External::SlidictIo::Client::RateLimited, "rate_limited")
 
         status = command.run(["create", "--body", "hello"])
 
@@ -136,7 +136,9 @@ RSpec.describe Slidict::Cli::Slides do
       end
 
       it "reports validation errors" do
-        error = Slidict::External::SlidesClient::Unprocessable.new("unprocessable", errors: ["body can't be blank"])
+        error = Slidict::External::SlidictIo::Client::Unprocessable.new(
+          "unprocessable", errors: ["body can't be blank"]
+        )
         allow(client).to receive(:create).and_raise(error)
 
         status = command.run(["create", "--body", "hello"])
@@ -167,7 +169,7 @@ RSpec.describe Slidict::Cli::Slides do
       end
 
       it "tells the user to use the Web UI when the slide is already published" do
-        allow(client).to receive(:update).and_raise(Slidict::External::SlidesClient::NotEditable, "not_editable")
+        allow(client).to receive(:update).and_raise(Slidict::External::SlidictIo::Client::NotEditable, "not_editable")
 
         status = command.run(["edit", "1", "--title", "New"])
 
@@ -178,7 +180,7 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "raises an authentication error when no CLI token is saved" do
-      credentials = instance_double(Slidict::External::Credentials, read_cli_token: nil)
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials, read_cli_token: nil)
       command = described_class.new(output: output, credentials: credentials)
 
       status = command.run(["list"])
@@ -188,9 +190,9 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "logs in automatically when no CLI token is saved and a login flow is injected" do
-      credentials = instance_double(Slidict::External::Credentials)
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials)
       allow(credentials).to receive(:read_cli_token).and_return(nil, { access_token: "tok", token_type: "Bearer" })
-      allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
+      allow(Slidict::External::SlidictIo::Client).to receive(:new).and_return(client)
       allow(client).to receive(:list).and_return("slides" => [], "has_more" => false)
       command = described_class.new(output: output, credentials: credentials, reauthenticate: -> { 0 })
 
@@ -200,13 +202,13 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "logs in and retries once when the API rejects the token as invalid" do
-      credentials = instance_double(Slidict::External::Credentials,
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials,
                                     read_cli_token: { access_token: "tok", token_type: "Bearer" })
-      allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
+      allow(Slidict::External::SlidictIo::Client).to receive(:new).and_return(client)
       attempt = 0
       allow(client).to receive(:create) do
         attempt += 1
-        raise Slidict::External::SlidesClient::Unauthorized, "invalid_token" if attempt == 1
+        raise Slidict::External::SlidictIo::Client::Unauthorized, "invalid_token" if attempt == 1
 
         { "id" => 1, "title" => "Title", "status" => "draft", "visibility" => "public",
           "updated_at" => "2026-06-27", "body" => "hello" }
@@ -220,10 +222,10 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "reports the error when the login flow itself fails after an invalid token" do
-      credentials = instance_double(Slidict::External::Credentials,
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials,
                                     read_cli_token: { access_token: "tok", token_type: "Bearer" })
-      allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
-      allow(client).to receive(:create).and_raise(Slidict::External::SlidesClient::Unauthorized, "invalid_token")
+      allow(Slidict::External::SlidictIo::Client).to receive(:new).and_return(client)
+      allow(client).to receive(:create).and_raise(Slidict::External::SlidictIo::Client::Unauthorized, "invalid_token")
       command = described_class.new(output: output, credentials: credentials, reauthenticate: -> { 1 })
 
       status = command.run(["create", "--title", "Title", "--body", "hello"])

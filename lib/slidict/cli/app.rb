@@ -161,8 +161,8 @@ module Slidict
       end
 
       def auth
-        client = @auth_client || External::AuthClient.new
-        credentials = @credentials || External::Credentials.new
+        client = @auth_client || External::SlidictIo::Auth.new
+        credentials = @credentials || External::SlidictIo::Credentials.new
 
         device = client.request_device_code
         @output.puts "1. Open #{device[:verification_uri]} in your browser"
@@ -180,12 +180,12 @@ module Slidict
           )
           @output.puts "4. Saved CLI access token to #{path}"
           return 0
-        rescue External::AuthClient::Pending
+        rescue External::SlidictIo::Auth::Pending
           return login_expired if Time.now >= deadline
 
           @sleeper.sleep(device[:interval])
         end
-      rescue External::AuthClient::Error, KeyError => e
+      rescue External::SlidictIo::Auth::Error, KeyError => e
         @output.puts "Error: GitHub auth failed (#{e.message})"
         1
       end

@@ -113,13 +113,13 @@ RSpec.describe Slidict::Cli::App do
         def poll_token(device_code:)
           if device_code == "device-123" && !@pending_seen
             @pending_seen = true
-            raise Slidict::External::AuthClient::Pending
+            raise Slidict::External::SlidictIo::Auth::Pending
           end
 
           { "access_token" => "cli-token", "token_type" => "Bearer", "provider" => "github" }
         end
       end.new
-      credentials = instance_double(Slidict::External::Credentials)
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials)
       sleeper = double("sleeper", sleep: nil)
       cli = described_class.new(
         input: input, output: output, auth_client: client, credentials: credentials, sleeper: sleeper

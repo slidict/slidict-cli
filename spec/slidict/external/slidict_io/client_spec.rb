@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Slidict::External::SlidesClient do
+RSpec.describe Slidict::External::SlidictIo::Client do
   let(:client) { described_class.new(access_token: "cli-token", base_url: "https://slidict.io") }
 
   def stub_http_response(body, code: "200", message: "OK")
@@ -50,7 +50,7 @@ RSpec.describe Slidict::External::SlidesClient do
     it "raises NotFound on a 404" do
       stub_error_response(Net::HTTPNotFound, "404", { "error" => "not_found" })
 
-      expect { client.show(999) }.to raise_error(Slidict::External::SlidesClient::NotFound)
+      expect { client.show(999) }.to raise_error(Slidict::External::SlidictIo::Client::NotFound)
     end
   end
 
@@ -64,19 +64,19 @@ RSpec.describe Slidict::External::SlidesClient do
     it "raises Unauthorized on a 401" do
       stub_error_response(Net::HTTPUnauthorized, "401", { "error" => "invalid_token" })
 
-      expect { client.create(body: "hello") }.to raise_error(Slidict::External::SlidesClient::Unauthorized)
+      expect { client.create(body: "hello") }.to raise_error(Slidict::External::SlidictIo::Client::Unauthorized)
     end
 
     it "raises RateLimited on a 429" do
       stub_error_response(Net::HTTPTooManyRequests, "429", {})
 
-      expect { client.create(body: "hello") }.to raise_error(Slidict::External::SlidesClient::RateLimited)
+      expect { client.create(body: "hello") }.to raise_error(Slidict::External::SlidictIo::Client::RateLimited)
     end
 
     it "raises Unprocessable with the response errors on a generic 422" do
       stub_error_response(Net::HTTPUnprocessableEntity, "422", { "errors" => ["body can't be blank"] })
 
-      expect { client.create(body: "") }.to raise_error(Slidict::External::SlidesClient::Unprocessable) do |error|
+      expect { client.create(body: "") }.to raise_error(Slidict::External::SlidictIo::Client::Unprocessable) do |error|
         expect(error.errors).to eq(["body can't be blank"])
       end
     end
@@ -86,13 +86,13 @@ RSpec.describe Slidict::External::SlidesClient do
     it "raises NotEditable when the slide is already published" do
       stub_error_response(Net::HTTPUnprocessableEntity, "422", { "error" => "not_editable" })
 
-      expect { client.update(1, body: "hello") }.to raise_error(Slidict::External::SlidesClient::NotEditable)
+      expect { client.update(1, body: "hello") }.to raise_error(Slidict::External::SlidictIo::Client::NotEditable)
     end
 
     it "raises Forbidden on a 403" do
       stub_error_response(Net::HTTPForbidden, "403", { "error" => "insufficient_scope" })
 
-      expect { client.update(1, body: "hello") }.to raise_error(Slidict::External::SlidesClient::Forbidden)
+      expect { client.update(1, body: "hello") }.to raise_error(Slidict::External::SlidictIo::Client::Forbidden)
     end
   end
 end

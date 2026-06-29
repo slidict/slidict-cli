@@ -6,7 +6,7 @@ module Slidict
     class Slides
       def initialize(output:, credentials: nil, client: nil, reauthenticate: nil)
         @output = output
-        @credentials = credentials || External::Credentials.new
+        @credentials = credentials || External::SlidictIo::Credentials.new
         @client = client
         @reauthenticate = reauthenticate
       end
@@ -107,17 +107,17 @@ module Slidict
       def list(options)
         print_slide_list(client.list(page: options[:page]))
         0
-      rescue External::SlidesClient::Error => e
+      rescue External::SlidictIo::Client::Error => e
         print_client_error(e)
       end
 
       def show(options)
         print_slide_detail(client.show(options[:id]))
         0
-      rescue External::SlidesClient::NotFound
+      rescue External::SlidictIo::Client::NotFound
         @output.puts "Error: slide not found"
         1
-      rescue External::SlidesClient::Error => e
+      rescue External::SlidictIo::Client::Error => e
         print_client_error(e)
       end
 
@@ -145,23 +145,23 @@ module Slidict
           @output.puts "#{verb} slide ##{slide["id"]} (draft)"
           print_slide_detail(slide)
           0
-        rescue External::SlidesClient::NotFound
+        rescue External::SlidictIo::Client::NotFound
           @output.puts "Error: slide not found"
           1
-        rescue External::SlidesClient::NotEditable
+        rescue External::SlidictIo::Client::NotEditable
           @output.puts "Error: this slide is already published. Edit it from the Web UI instead."
           1
-        rescue External::SlidesClient::RateLimited
+        rescue External::SlidictIo::Client::RateLimited
           print_rate_limited
-        rescue External::SlidesClient::Unprocessable => e
+        rescue External::SlidictIo::Client::Unprocessable => e
           print_unprocessable(e)
-        rescue External::SlidesClient::Unauthorized => e
+        rescue External::SlidictIo::Client::Unauthorized => e
           if !reauthenticated && reauthenticate!
             reauthenticated = true
             retry
           end
           print_client_error(e)
-        rescue External::SlidesClient::Error => e
+        rescue External::SlidictIo::Client::Error => e
           print_client_error(e)
         end
       end
@@ -178,7 +178,7 @@ module Slidict
           token = @credentials.read_cli_token if token.nil? && reauthenticate!
           raise ArgumentError, "not authenticated. Run `slidict auth` first." unless token
 
-          External::SlidesClient.new(access_token: token[:access_token], token_type: token[:token_type])
+          External::SlidictIo::Client.new(access_token: token[:access_token], token_type: token[:token_type])
         end
       end
 

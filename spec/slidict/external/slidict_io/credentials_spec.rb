@@ -3,7 +3,7 @@
 require "json"
 require "tmpdir"
 
-RSpec.describe Slidict::External::Credentials do
+RSpec.describe Slidict::External::SlidictIo::Credentials do
   it "writes only a CLI access token with private file permissions" do
     Dir.mktmpdir do |dir|
       path = File.join(dir, "slidict", "credentials.json")
