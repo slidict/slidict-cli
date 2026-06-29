@@ -11,6 +11,7 @@ Unlike traditional slide generators, Slidict focuses on communication before sli
 - Interactive CLI conversation
 - Generate slides for Slidev, Marp, Asciidoctor Reveal.js, and other OSS presentation frameworks
 - Local-first MVP implemented in Ruby
+- Built-in Sinatra server for browsing generated slides from `public/`
 - OpenAI Compatible API support, so you can point Slidict at OpenAI, Ollama, LM Studio, vLLM, or any other server implementing the same `/chat/completions` endpoint
 
 ## Requirements
@@ -28,7 +29,7 @@ bin/slidict
 Slidict asks a few questions and generates presentation source files. For example, this creates a Marp Markdown deck:
 
 ```bash
-$ bin/slidict --framework marp --output slides.md
+$ bin/slidict --framework marp
 
 What would you like to talk about?
 > PDF Difference Monitoring Service
@@ -38,7 +39,7 @@ Who is the audience?
 > Engineering managers
 What should the audience remember or do?
 > Approve an MVP pilot
-Created slides.md
+Created public/001.md
 ```
 
 You can also provide answers non-interactively:
@@ -69,12 +70,17 @@ bin/slidict --topic "PDF Difference Monitoring Service" --duration "5 minutes" \
 
 ## Output files
 
-Choose the framework and output path that match the presentation tool you want to use. If you omit `--output`, Slidict chooses a framework-specific default:
+Choose the framework and output path that match the presentation tool you want to use. If you omit `--output`, Slidict writes under `public/` with the next sequential file name. Use `--filename` to choose the relative file name under `public/`; Slidict appends the framework extension when the name has no extension.
+
+```bash
+# Choose a served file name under public/
+bin/slidict --filename product-demo/slides --topic "Product Demo"
+```
 
 ```text
-Slidev                  -> slides.md
-Marp                    -> slides.md
-Asciidoctor Reveal.js   -> slides.adoc
+Slidev                  -> public/001.md, public/002.md, ...
+Marp                    -> public/001.md, public/002.md, ...
+Asciidoctor Reveal.js   -> public/001.adoc, public/002.adoc, ...
 ```
 
 ## Commands
@@ -106,6 +112,17 @@ bin/slidict slides edit <id> [--title TEXT] [--body TEXT | --file PATH] [--body-
 - `create`/`edit` are rate limited to once per minute per user.
 
 Run `bin/slidict slides -h` for the full list of options.
+
+### `slidict serve`
+
+Serve generated slide files from the local `public/` directory with Sinatra. The top
+page lists Markdown and Asciidoc slide files below `public/`, so you can organize
+decks in subdirectories such as `public/product-demo/slides.md`. Any arguments
+after `serve` are passed through to Sinatra.
+
+```bash
+bin/slidict serve -p 4567 -o 0.0.0.0
+```
 
 `bin/slidict --publish` and `--slide-id` (see [Usage](#usage)) wrap this same `create`/`edit`
 behavior so you can save the slides you just generated straight to slidict.io.

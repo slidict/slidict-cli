@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe Slidict::MarkdownRenderer do
+RSpec.describe Slidict::Output::Renderer do
   let(:deck) do
     Slidict::Deck.new(
       topic: "PDF Difference Monitoring Service",
@@ -59,7 +59,9 @@ RSpec.describe Slidict::MarkdownRenderer do
     end
 
     it "falls back to the slidev frontmatter for unknown frameworks" do
-      unknown_deck = Slidict::Deck.new(topic: "x", duration: "x", audience: "x", goal: "x", framework: "keynote")
+      unknown_deck = Slidict::Deck.new(
+        topic: "x", duration: "x", audience: "x", goal: "x", framework: "keynote"
+      )
 
       markdown = described_class.new.render(unknown_deck)
 

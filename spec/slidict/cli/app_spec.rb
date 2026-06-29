@@ -3,7 +3,7 @@
 require "stringio"
 require "tmpdir"
 
-RSpec.describe Slidict::CLI do
+RSpec.describe Slidict::Cli::App do
   let(:output) { StringIO.new }
   let(:input) { StringIO.new }
   let(:cli) { described_class.new(input: input, output: output) }
@@ -28,17 +28,17 @@ RSpec.describe Slidict::CLI do
       end
     end
 
-    it "defaults the output path to slides.md" do
+    it "defaults the output path to the next sequential public file" do
       Dir.mktmpdir do |dir|
         Dir.chdir(dir) do
           cli.run(["--topic", "x", "--duration", "x", "--audience", "x", "--goal", "x"])
 
-          expect(File.exist?("slides.md")).to be(true)
+          expect(File.exist?("public/001.md")).to be(true)
         end
       end
     end
 
-    it "uses a framework-specific default output path" do
+    it "uses a framework-specific extension for the sequential output path" do
       Dir.mktmpdir do |dir|
         Dir.chdir(dir) do
           cli.run([
@@ -49,8 +49,56 @@ RSpec.describe Slidict::CLI do
                     "--framework", "asciidoctor-revealjs"
                   ])
 
-          expect(File.exist?("slides.adoc")).to be(true)
-          expect(File.read("slides.adoc")).to include("= Observability")
+          expect(File.exist?("public/001.adoc")).to be(true)
+          expect(File.read("public/001.adoc")).to include("= Observability")
+        end
+      end
+    end
+
+    it "uses --filename under public and appends the framework extension" do
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          cli.run([
+                    "--topic", "Observability",
+                    "--duration", "10 minutes",
+                    "--audience", "SREs",
+                    "--goal", "adopt the checklist",
+                    "--filename", "team/demo"
+                  ])
+
+          expect(File.exist?("public/team/demo.md")).to be(true)
+          expect(File.read("public/team/demo.md")).to include("# Observability")
+        end
+      end
+    end
+
+    it "does not duplicate public/ when --filename already starts with it" do
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          cli.run([
+                    "--topic", "Observability",
+                    "--duration", "10 minutes",
+                    "--audience", "SREs",
+                    "--goal", "adopt the checklist",
+                    "--filename", "public/demo"
+                  ])
+
+          expect(File.exist?("public/demo.md")).to be(true)
+          expect(File.exist?("public/public/demo.md")).to be(false)
+        end
+      end
+    end
+
+    it "increments the default output filename when a sequential file exists" do
+      Dir.mktmpdir do |dir|
+        Dir.chdir(dir) do
+          FileUtils.mkdir_p("public")
+          File.write("public/001.md", "existing")
+
+          cli.run(["--topic", "x", "--duration", "x", "--audience", "x", "--goal", "x"])
+
+          expect(File.read("public/001.md")).to eq("existing")
+          expect(File.exist?("public/002.md")).to be(true)
         end
       end
     end
@@ -82,13 +130,13 @@ RSpec.describe Slidict::CLI do
         def poll_token(device_code:)
           if device_code == "device-123" && !@pending_seen
             @pending_seen = true
-            raise Slidict::AuthClient::Pending
+            raise Slidict::External::SlidictIo::Auth::Pending
           end
 
           { "access_token" => "cli-token", "token_type" => "Bearer", "provider" => "github" }
         end
       end.new
-      credentials = instance_double(Slidict::Credentials)
+      credentials = instance_double(Slidict::External::SlidictIo::Credentials)
       sleeper = double("sleeper", sleep: nil)
       cli = described_class.new(
         input: input, output: output, auth_client: client, credentials: credentials, sleeper: sleeper
@@ -151,8 +199,8 @@ RSpec.describe Slidict::CLI do
 
     it "uses LLM-generated slides when an llm-base-url is configured" do
       generated = [Slidict::Slide.new(title: "Generated title", bullets: %w[a b])]
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides).and_return(generated)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:generate_slides).and_return(generated)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -168,9 +216,9 @@ RSpec.describe Slidict::CLI do
     end
 
     it "prints an error and exits without writing a file when the LLM request fails" do
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-      allow_any_instance_of(Slidict::LLMClient).to receive(:generate_slides)
-        .and_raise(Slidict::LLMClient::Error, "boom")
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:generate_slides)
+        .and_raise(Slidict::Llm::Client::Error, "boom")
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -187,9 +235,9 @@ RSpec.describe Slidict::CLI do
     end
 
     it "checks the connection before asking any questions and exits without prompting on failure" do
-      allow_any_instance_of(Slidict::LLMClient).to receive(:verify_connection!)
-        .and_raise(Slidict::LLMClient::Error, "connection refused")
-      expect_any_instance_of(Slidict::LLMClient).not_to receive(:generate_slides)
+      allow_any_instance_of(Slidict::Llm::Client).to receive(:verify_connection!)
+        .and_raise(Slidict::Llm::Client::Error, "connection refused")
+      expect_any_instance_of(Slidict::Llm::Client).not_to receive(:generate_slides)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
@@ -204,7 +252,7 @@ RSpec.describe Slidict::CLI do
     end
 
     it "publishes the generated slides as a new draft when --publish is given" do
-      slides_command = instance_double(Slidict::SlidesCommand, publish: 0)
+      slides_command = instance_double(Slidict::Cli::Slides, publish: 0)
       cli = described_class.new(input: input, output: output, slides_command: slides_command)
 
       Dir.mktmpdir do |dir|
@@ -228,7 +276,7 @@ RSpec.describe Slidict::CLI do
     end
 
     it "edits an existing draft when --slide-id is given" do
-      slides_command = instance_double(Slidict::SlidesCommand, publish: 0)
+      slides_command = instance_double(Slidict::Cli::Slides, publish: 0)
       cli = described_class.new(input: input, output: output, slides_command: slides_command)
 
       Dir.mktmpdir do |dir|
@@ -248,7 +296,7 @@ RSpec.describe Slidict::CLI do
     end
 
     it "delegates the slides command to SlidesCommand" do
-      slides_command = instance_double(Slidict::SlidesCommand, run: 0)
+      slides_command = instance_double(Slidict::Cli::Slides, run: 0)
       cli = described_class.new(input: input, output: output, slides_command: slides_command)
 
       status = cli.run(["slides", "list", "--page", "2"])
@@ -257,8 +305,18 @@ RSpec.describe Slidict::CLI do
       expect(slides_command).to have_received(:run).with(["list", "--page", "2"])
     end
 
+    it "delegates the serve command and passes arguments to the Sinatra server" do
+      server = instance_double(Slidict::Cli::Serve, run: 0)
+      cli = described_class.new(input: input, output: output, server: server)
+
+      status = cli.run(["serve", "-p", "4567", "-o", "0.0.0.0"])
+
+      expect(status).to eq(0)
+      expect(server).to have_received(:run).with(["-p", "4567", "-o", "0.0.0.0"])
+    end
+
     it "skips the LLM call when --no-llm is given even with a base URL" do
-      expect(Slidict::LLMClient).not_to receive(:new)
+      expect(Slidict::Llm::Client).not_to receive(:new)
 
       Dir.mktmpdir do |dir|
         path = File.join(dir, "slides.md")
