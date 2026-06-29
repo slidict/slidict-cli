@@ -109,7 +109,7 @@ module Slidict
       def lint_prompt_for(slide_texts, translate: nil)
         numbered = slide_texts.each_with_index.map { |text, i| "--- Slide #{i + 1} ---\n#{text}" }.join("\n\n")
         prompt = format(LINT_PROMPT_TEMPLATE, numbered: numbered)
-        translate ? "#{prompt}\nWrite each message field in #{translate}." : prompt
+        translate ? "#{prompt}\nTranslate only the \"message\" field of each finding into #{translate}. Keep \"slide\" as an integer and \"severity\" as exactly \"warning\" or \"info\" — do not translate those values." : prompt
       end
 
       def findings_from(content)
