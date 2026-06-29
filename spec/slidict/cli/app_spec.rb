@@ -119,7 +119,7 @@ RSpec.describe Slidict::Cli::App do
           { "access_token" => "cli-token", "token_type" => "Bearer", "provider" => "github" }
         end
       end.new
-      credentials = instance_double(Slidict::Credentials)
+      credentials = instance_double(Slidict::External::Credentials)
       sleeper = double("sleeper", sleep: nil)
       cli = described_class.new(
         input: input, output: output, auth_client: client, credentials: credentials, sleeper: sleeper

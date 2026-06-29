@@ -6,7 +6,7 @@ module Slidict
     class Slides
       def initialize(output:, credentials: nil, client: nil, reauthenticate: nil)
         @output = output
-        @credentials = credentials || Credentials.new
+        @credentials = credentials || External::Credentials.new
         @client = client
         @reauthenticate = reauthenticate
       end

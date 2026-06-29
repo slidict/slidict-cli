@@ -162,7 +162,7 @@ module Slidict
 
       def auth
         client = @auth_client || External::AuthClient.new
-        credentials = @credentials || Credentials.new
+        credentials = @credentials || External::Credentials.new
 
         device = client.request_device_code
         @output.puts "1. Open #{device[:verification_uri]} in your browser"

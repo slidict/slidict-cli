@@ -178,7 +178,7 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "raises an authentication error when no CLI token is saved" do
-      credentials = instance_double(Slidict::Credentials, read_cli_token: nil)
+      credentials = instance_double(Slidict::External::Credentials, read_cli_token: nil)
       command = described_class.new(output: output, credentials: credentials)
 
       status = command.run(["list"])
@@ -188,7 +188,7 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "logs in automatically when no CLI token is saved and a login flow is injected" do
-      credentials = instance_double(Slidict::Credentials)
+      credentials = instance_double(Slidict::External::Credentials)
       allow(credentials).to receive(:read_cli_token).and_return(nil, { access_token: "tok", token_type: "Bearer" })
       allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
       allow(client).to receive(:list).and_return("slides" => [], "has_more" => false)
@@ -200,7 +200,8 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "logs in and retries once when the API rejects the token as invalid" do
-      credentials = instance_double(Slidict::Credentials, read_cli_token: { access_token: "tok", token_type: "Bearer" })
+      credentials = instance_double(Slidict::External::Credentials,
+                                    read_cli_token: { access_token: "tok", token_type: "Bearer" })
       allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
       attempt = 0
       allow(client).to receive(:create) do
@@ -219,7 +220,8 @@ RSpec.describe Slidict::Cli::Slides do
     end
 
     it "reports the error when the login flow itself fails after an invalid token" do
-      credentials = instance_double(Slidict::Credentials, read_cli_token: { access_token: "tok", token_type: "Bearer" })
+      credentials = instance_double(Slidict::External::Credentials,
+                                    read_cli_token: { access_token: "tok", token_type: "Bearer" })
       allow(Slidict::External::SlidesClient).to receive(:new).and_return(client)
       allow(client).to receive(:create).and_raise(Slidict::External::SlidesClient::Unauthorized, "invalid_token")
       command = described_class.new(output: output, credentials: credentials, reauthenticate: -> { 1 })
