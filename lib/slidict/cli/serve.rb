@@ -14,8 +14,6 @@ module Slidict
       end
 
       def run(args = [])
-        require "sinatra/base"
-
         app = build_app
         original_argv = ARGV.dup
         ARGV.replace(args)
@@ -29,6 +27,8 @@ module Slidict
       private
 
       def build_app
+        require "sinatra/base"
+
         public_dir = @public_dir
 
         Class.new(Sinatra::Base) do
