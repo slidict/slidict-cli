@@ -12,13 +12,19 @@ jobs:
     name: Build + Publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          version=$(grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" lib/slidict/version.rb | head -n 1)
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Set up Ruby 3.4
         uses: ruby/setup-ruby@v1
@@ -47,3 +53,13 @@ jobs:
           gem push *.gem
         env:
           GEM_HOST_API_KEY: "${{ secrets.RUBYGEMS_AUTH_TOKEN }}"
+
+      - name: Publish release notes
+        uses: release-drafter/release-drafter@v5
+        with:
+          config-name: release-drafter.yml
+          publish: true
+          tag: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
