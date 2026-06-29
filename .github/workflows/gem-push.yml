@@ -1,16 +1,17 @@
 name: Ruby Gem
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - lib/slidict/version.rb
+  workflow_run:
+    workflows:
+      - Changelog
+    types:
+      - completed
 
 jobs:
   build:
     name: Build + Publish
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
     permissions:
       contents: write
       packages: write
@@ -18,20 +19,33 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
+      - name: Check if version file changed
+        id: version_file
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qx "lib/slidict/version.rb"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract version
+        if: steps.version_file.outputs.changed == 'true'
         id: version
         run: |
           version=$(grep -Eo "[0-9]+\.[0-9]+\.[0-9]+" lib/slidict/version.rb | head -n 1)
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
       - name: Set up Ruby 3.4
+        if: steps.version_file.outputs.changed == 'true'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 3.4.3
 
       - name: Publish to GPR
+        if: steps.version_file.outputs.changed == 'true'
         run: |
           mkdir -p $HOME/.gem
           touch $HOME/.gem/credentials
@@ -44,6 +58,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
 
       - name: Publish to RubyGems
+        if: steps.version_file.outputs.changed == 'true'
         run: |
           mkdir -p $HOME/.gem
           touch $HOME/.gem/credentials
@@ -55,6 +70,7 @@ jobs:
           GEM_HOST_API_KEY: "${{ secrets.RUBYGEMS_AUTH_TOKEN }}"
 
       - name: Publish release notes
+        if: steps.version_file.outputs.changed == 'true'
         uses: release-drafter/release-drafter@v5
         with:
           config-name: release-drafter.yml
