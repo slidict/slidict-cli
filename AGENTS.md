@@ -39,3 +39,15 @@ Common types used in this repo:
 - `test:` adding or correcting tests
 
 Keep the summary short and in the imperative mood (e.g. `fix: handle empty topic input`).
+
+## Versioning (SemVer)
+
+This project follows [Semantic Versioning](https://semver.org/). For a CLI like slidict, apply these rules:
+
+| Change type | Version bump |
+|---|---|
+| Breaking change — existing commands, options, config format, or output parsing breaks | `MAJOR` (`1.x → 2.0.0`) |
+| Backward-compatible addition — new command, new option, new output field | `MINOR` (`1.2.x → 1.3.0`) |
+| Backward-compatible fix — bug fix, internal refactor, perf improvement, dependency update | `PATCH` (`1.2.3 → 1.2.4`) |
+
+While the project is at `0.x`, breaking changes may be released as `MINOR` bumps (e.g. `0.3.x → 0.4.0`) following common OSS convention.
