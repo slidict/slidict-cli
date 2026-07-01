@@ -10,12 +10,12 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Generate presentation-ready slides from a simple conversation."
   spec.description = "Slidict is a Ruby CLI for turning rough ideas into presentation-ready Markdown slides."
-  spec.homepage = "https://labs.slidict.io/slidict/"
+  spec.homepage = "https://slidict.com"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/slidict/slidict"
-  spec.metadata["changelog_uri"] = "https://github.com/slidict/slidict/releases"
+  spec.metadata["source_code_uri"] = "https://github.com/slidict/slidict-cli"
+  spec.metadata["changelog_uri"] = "https://github.com/slidict/slidict-cli/releases"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
