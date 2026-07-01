@@ -1,0 +1,35 @@
+id: prep
+name: PREP
+category: persuasive
+description: Point, Reason, Example, Point structure for concise persuasive talks.
+locale: en
+suitable_for:
+  - Short recommendations
+  - Lightning talks
+  - Sales or product pitches
+slides:
+  - title: Point
+    role: State the main claim or recommendation immediately.
+    instructions: Open with the conclusion the audience should remember.
+  - title: Reason
+    role: Explain why the point is valid or important.
+    instructions: Give two or three audience-relevant reasons without overloading the slide.
+  - title: Example
+    role: Make the reason concrete with evidence, a case, or a scenario.
+    instructions: Use a specific example that proves the point in the audience's context.
+  - title: Point Revisited
+    role: Reinforce the original claim after the supporting material.
+    instructions: Restate the point with sharper wording and connect it to the desired action.
+  - title: Action
+    role: Ask the audience to decide, try, approve, or remember something.
+    instructions: End with a clear call to action and success criterion.
+ai_instructions:
+  - Put the conclusion before the explanation.
+  - Keep the example concrete enough that the audience can visualize it.
+  - Make the final point stronger, not merely repetitive.
+review_checklist:
+  - Is the opening point unmistakable?
+  - Do the reasons support the point rather than introduce new claims?
+  - Is the example specific and relevant?
+  - Does the closing restatement lead to action?
+references: []

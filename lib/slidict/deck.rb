@@ -4,14 +4,15 @@ module Slidict
   Slide = Struct.new(:title, :bullets, keyword_init: true)
 
   class Deck
-    attr_reader :topic, :duration, :audience, :goal, :framework
+    attr_reader :topic, :duration, :audience, :goal, :framework, :presentation_method
 
-    def initialize(topic:, duration:, audience:, goal:, framework: "slidev", slides: nil)
+    def initialize(topic:, duration:, audience:, goal:, framework: "slidev", slides: nil, presentation_method: nil)
       @topic = normalize(topic, fallback: "Untitled presentation")
       @duration = normalize(duration, fallback: "5 minutes")
       @audience = normalize(audience, fallback: "general audience")
       @goal = normalize(goal, fallback: "understand the key message")
       @framework = normalize(framework, fallback: "slidev").downcase
+      @presentation_method = presentation_method
       @slides = slides
     end
 
@@ -22,6 +23,8 @@ module Slidict
     private
 
     def default_slides
+      return method_slides if presentation_method
+
       [
         Slide.new(title: topic, bullets: ["For #{audience}", "Goal: #{goal}", "Length: #{duration}"]),
         Slide.new(title: "Why this matters", bullets: ["Clarifies the problem before discussing solutions", "Keeps the story focused on audience value", "Sets up a memorable takeaway"]),
@@ -29,6 +32,15 @@ module Slidict
         Slide.new(title: "Suggested narrative", bullets: ["Start with the current pain or opportunity", "Show what changes when #{topic} works well", "Close with the next step you want the audience to take"]),
         Slide.new(title: "Next steps", bullets: ["Review the generated outline", "Replace generic bullets with concrete examples", "Rehearse and refine for #{duration}"])
       ]
+    end
+
+    def method_slides
+      presentation_method.slides.map do |slide|
+        Slide.new(
+          title: slide.title,
+          bullets: [slide.role, slide.instructions, "Tie this slide to: #{goal}"]
+        )
+      end
     end
 
     def normalize(value, fallback:)

@@ -1,0 +1,38 @@
+id: scqa
+name: SCQA
+category: narrative
+description: Situation, Complication, Question, Answer structure for building a clear business narrative.
+locale: en
+suitable_for:
+  - Strategy updates
+  - Problem-solving proposals
+  - Executive briefings
+slides:
+  - title: Situation
+    role: Establish the shared context the audience already recognizes.
+    instructions: Describe the current state with concrete facts and avoid introducing the problem too early.
+  - title: Complication
+    role: Show what changed, broke, or created tension.
+    instructions: Explain why the current state is no longer sufficient and make the stakes explicit.
+  - title: Question
+    role: State the key decision or question the talk must answer.
+    instructions: Phrase the question from the audience's point of view.
+  - title: Answer
+    role: Present the core recommendation or conclusion.
+    instructions: Give the answer first, then support it with the strongest evidence.
+  - title: Next Steps
+    role: Convert the answer into action.
+    instructions: Close with the decision, owner, and immediate next step.
+ai_instructions:
+  - Use the SCQA sequence exactly and keep each slide focused on one narrative job.
+  - Make the answer concise enough to be repeated as a one-sentence takeaway.
+  - Prefer audience-relevant evidence over generic background.
+review_checklist:
+  - Does the situation establish common ground?
+  - Is the complication specific and consequential?
+  - Is the question explicit and audience-centered?
+  - Does the answer directly resolve the question?
+  - Are the next steps concrete?
+references:
+  - title: The Pyramid Principle
+    author: Barbara Minto

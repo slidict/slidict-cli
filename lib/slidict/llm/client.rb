@@ -64,12 +64,32 @@ module Slidict
           Duration: #{deck.duration}
           Audience: #{deck.audience}
           Goal: #{deck.goal}
+          #{method_prompt_for(deck)}
 
-          Return exactly 5 slides as a JSON array. Each item must be an object with
+          Return one slide for each required slide role when a presentation method is
+          provided; otherwise return exactly 5 slides. Each item must be an object with
           a "title" string and a "bullets" array of 2-4 short strings.
           Respond with the JSON array only: no commentary, no markdown code fences,
           and no reasoning or thinking content before or after it.
         PROMPT
+      end
+
+      def method_prompt_for(deck)
+        method = deck.presentation_method
+        return "" unless method
+
+        slides = method.slides.each_with_index.map do |slide, index|
+          "#{index + 1}. #{slide.title} — role: #{slide.role}; instructions: #{slide.instructions}"
+        end.join("\n")
+        instructions = method.ai_instructions.map { |item| "- #{item}" }.join("\n")
+        <<~METHOD
+          Presentation method: #{method.name} (#{method.id})
+          Method description: #{method.description}
+          Required slide roles:
+          #{slides}
+          Method-specific generation instructions:
+          #{instructions}
+        METHOD
       end
 
       LINT_PROMPT_TEMPLATE = <<~PROMPT

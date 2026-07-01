@@ -1,0 +1,41 @@
+id: pyramid
+name: Pyramid Principle
+category: executive-communication
+description: Top-down communication structure that starts with the governing thought and supports it with grouped arguments.
+locale: en
+suitable_for:
+  - Executive presentations
+  - Consulting-style recommendations
+  - Complex decisions with multiple supporting arguments
+slides:
+  - title: Governing Thought
+    role: Present the answer or recommendation first.
+    instructions: State the central message as a complete sentence, not a topic label.
+  - title: Key Line
+    role: Preview the small set of main arguments that support the governing thought.
+    instructions: Group supporting ideas into mutually distinct and collectively useful points.
+  - title: Argument 1
+    role: Develop the first supporting argument.
+    instructions: Explain the argument with evidence and show how it supports the governing thought.
+  - title: Argument 2
+    role: Develop the second supporting argument.
+    instructions: Explain the argument with evidence and avoid repeating Argument 1.
+  - title: Argument 3
+    role: Develop the third supporting argument or risk response.
+    instructions: Use this slide for a third pillar, trade-off, or objection handling.
+  - title: Synthesis
+    role: Reconnect the support to the recommendation and action.
+    instructions: Summarize the logic and ask for the specific decision or next step.
+ai_instructions:
+  - Start with the answer before details.
+  - Organize support into a clear hierarchy with parallel argument labels.
+  - Keep each argument distinct and tied back to the governing thought.
+review_checklist:
+  - Is the governing thought a complete answer?
+  - Are supporting arguments grouped logically?
+  - Are argument labels parallel and non-overlapping?
+  - Does every detail support a higher-level claim?
+  - Does the synthesis request a concrete decision or action?
+references:
+  - title: The Pyramid Principle
+    author: Barbara Minto

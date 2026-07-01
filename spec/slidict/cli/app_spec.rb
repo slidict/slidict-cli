@@ -162,11 +162,53 @@ RSpec.describe Slidict::Cli::App do
       expect(output.string).to include("Error: auth does not accept options")
     end
 
+    it "uses a presentation method template when --method is given without an LLM" do
+      Dir.mktmpdir do |dir|
+        path = File.join(dir, "slides.md")
+
+        status = cli.run([
+                           "--topic", "Market expansion", "--duration", "10 minutes",
+                           "--audience", "Executives", "--goal", "approve the plan",
+                           "--method", "scqa", "--output", path
+                         ])
+
+        expect(status).to eq(0)
+        expect(File.read(path)).to include("# Situation")
+        expect(File.read(path)).to include("# Complication")
+      end
+    end
+
+    it "rejects an unknown presentation method before prompting" do
+      status = cli.run(["--method", "unknown", "--output", "slides.md"])
+
+      expect(status).to eq(1)
+      expect(output.string).to include("Error: unknown presentation method unknown")
+      expect(output.string).not_to include("What would you like to talk about?")
+    end
+
+    it "lists presentation methods" do
+      status = cli.run(["list-methods"])
+
+      expect(status).to eq(0)
+      expect(output.string).to include("scqa")
+      expect(output.string).to include("PREP")
+      expect(output.string).to include("Pyramid Principle")
+    end
+
+    it "shows presentation method details" do
+      status = cli.run(["show-method", "scqa"])
+
+      expect(status).to eq(0)
+      expect(output.string).to include("SCQA (scqa)")
+      expect(output.string).to include("Situation")
+      expect(output.string).to include("Review checklist")
+    end
+
     it "prints help and returns 0 when -h is given" do
       status = cli.run(["-h"])
 
       expect(status).to eq(0)
-      expect(output.string).to include("Usage: slidict [options]")
+      expect(output.string).to include("Usage: slidict [new] [options]")
     end
 
     it "prints an error and help when an unknown option is given" do
@@ -174,7 +216,7 @@ RSpec.describe Slidict::Cli::App do
 
       expect(status).to eq(1)
       expect(output.string).to include("Error: unknown option --bogus")
-      expect(output.string).to include("Usage: slidict [options]")
+      expect(output.string).to include("Usage: slidict [new] [options]")
     end
 
     it "prints an error when an option is missing its value" do

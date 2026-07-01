@@ -26,6 +26,8 @@ module Slidict
         return slides(options[:args]) if options[:command] == "slides"
         return serve(options[:args]) if options[:command] == "serve"
         return lint(options[:args]) if options[:command] == "lint"
+        return list_methods if options[:command] == "list-methods"
+        return show_method(options[:args]) if options[:command] == "show-method"
 
         config = build_config(options)
         return print_available_models(config) if config.llm_enabled? && config.model.nil?
@@ -38,7 +40,8 @@ module Slidict
           duration: ask("How long is the presentation?", options[:duration]),
           audience: ask("Who is the audience?", options[:audience]),
           goal: ask("What should the audience remember or do?", options[:goal]),
-          framework: options[:framework]
+          framework: options[:framework],
+          presentation_method: options[:presentation_method]
         )
 
         if client
@@ -50,7 +53,7 @@ module Slidict
           end
           deck = Deck.new(
             topic: deck.topic, duration: deck.duration, audience: deck.audience, goal: deck.goal,
-            framework: deck.framework, slides: slides
+            framework: deck.framework, slides: slides, presentation_method: deck.presentation_method
           )
         end
 
@@ -75,6 +78,8 @@ module Slidict
       def parse(argv)
         options = { framework: "slidev" }
         args = argv.dup
+
+        args.shift if args.first == "new"
 
         if args.first == "auth"
           args.shift
@@ -105,6 +110,21 @@ module Slidict
           return options
         end
 
+        if args.first == "list-methods"
+          args.shift
+          raise ArgumentError, "list-methods does not accept options" unless args.empty?
+
+          options[:command] = "list-methods"
+          return options
+        end
+
+        if args.first == "show-method"
+          args.shift
+          options[:command] = "show-method"
+          options[:args] = args
+          return options
+        end
+
         until args.empty?
           case (arg = args.shift)
           when "-h", "--help"
@@ -123,6 +143,8 @@ module Slidict
             options[:goal] = fetch_value!(args, arg)
           when "--framework"
             options[:framework] = fetch_value!(args, arg)
+          when "--method"
+            options[:method] = fetch_value!(args, arg)
           when "--llm-base-url"
             options[:llm_base_url] = fetch_value!(args, arg)
           when "--llm-api-key"
@@ -145,6 +167,7 @@ module Slidict
         end
 
         options[:output] ||= output_path_for(options[:framework], options[:filename])
+        options[:presentation_method] = method_for(options[:method])
         options
       end
 
@@ -228,6 +251,41 @@ module Slidict
         lint_command.run(args)
       end
 
+      def list_methods
+        method_registry.all.each do |method|
+          @output.puts format(
+            "%-12<id>s %-28<name>s %<category>s",
+            id: method.id, name: method.name, category: method.category
+          )
+        end
+        0
+      end
+
+      def show_method(args)
+        raise ArgumentError, "show-method requires a method id" if args.empty?
+        raise ArgumentError, "show-method accepts exactly one method id" unless args.size == 1
+
+        method = method_registry.fetch(args.first)
+        @output.puts "#{method.name} (#{method.id})"
+        @output.puts "Category: #{method.category}"
+        @output.puts "Description: #{method.description}"
+        @output.puts "Suitable for:"
+        method.suitable_for.each { |item| @output.puts "  - #{item}" }
+        @output.puts "Slides:"
+        method.slides.each_with_index { |slide, i| @output.puts "  #{i + 1}. #{slide.title}: #{slide.role}" }
+        @output.puts "Review checklist:"
+        method.review_checklist.each { |item| @output.puts "  - #{item}" }
+        0
+      end
+
+      def method_for(id)
+        id ? method_registry.fetch(id) : nil
+      end
+
+      def method_registry
+        @method_registry ||= PresentationMethodRegistry.new
+      end
+
       def publish_to_slidict(deck, content, options)
         slides_command.publish(
           id: options[:slide_id],
@@ -276,11 +334,13 @@ module Slidict
 
       def print_help
         @output.puts <<~HELP
-          Usage: slidict [options]
+          Usage: slidict [new] [options]
           Usage: slidict auth
           Usage: slidict slides <list|show|create|edit> [options]
           Usage: slidict serve [sinatra options]
           Usage: slidict lint <file> [options]
+          Usage: slidict list-methods
+          Usage: slidict show-method <id>
 
           Generate presentation source files from a short conversation.
 
@@ -290,6 +350,8 @@ module Slidict
             serve            Serve slide files from ./public with Sinatra
             lint             Check whether a slide deck's structure will land with its audience
                              (run `slidict lint -h` for details)
+            list-methods     List available presentation methods
+            show-method      Show details for one presentation method
 
           Options:
               --topic TEXT       Presentation topic
@@ -297,6 +359,7 @@ module Slidict
               --audience TEXT    Target audience
               --goal TEXT        Desired audience takeaway or action
               --framework NAME   #{Output::Format.names.join(", ")} (default: slidev)
+              --method ID        Presentation method, for example scqa, prep, or pyramid
               --filename NAME    File name under public/ (default: next sequential file)
               --llm-base-url URL OpenAI Compatible API base URL (env: SLIDICT_LLM_BASE_URL).
                                  When omitted, the built-in slide template is used instead.
